@@ -13,24 +13,25 @@ Graph::~Graph()
 
 void Graph::CalcAttractions()
 {
-	for (auto it : _rooms) {
-		double minTime = 32768;
-		for (auto de : _destinations) {
-			// Dijkstra for all the destinations
-			double curTime;
-			//curTime = Dijkstra(it, de);
-			if (curTime < minTime) {
-				minTime = curTime;
+	std::map<Gate * , double>_minTimes;
+	for (auto rm : _rooms) {
+		for (auto neighbor = rm->begin(); neighbor != rm->end(); ++neighbor) {
+			// Traversal all the neighbors
+			for (auto des : _destinations) {
+				double curdesMinTime = minTimeRequired((*neighbor)->getDest(), des);
+				if(_minTimes[*neighbor] > curdesMinTime)
+				_minTimes[*neighbor] = curdesMinTime;
 			}
 		}
-		double totalVelocity = 0;
-		for (auto i : *it) {
-			totalVelocity += i->getVelocity();
+		while (rm->getPopulation()) {
+			Gate * choice = *(rm->begin());
+			for (auto neighbor = rm->begin(); neighbor != rm->end(); ++neighbor) {
+				if (_minTimes[*neighbor] < _minTimes[choice]) choice = *neighbor;
+			}
+			rm->setPopulation(rm->getPopulation() - 1);
+			if (!choice->getDest()->isExit()) choice->getDest()->setPopulation(choice->getDest()->getPopulation() + 1);
+			_minTimes[choice] += 1 / choice->getVelocity();
 		}
-		minTime += it->getPopulation() / totalVelocity;
-		double attrac;
-		//attrac = f(minTime);
-		it->setAttraction(attrac);
 	}
 }
 
@@ -50,11 +51,16 @@ double Graph::minTimeRequired(Room * s, Room * t)
 		const std::pair<Room *, double>& lhs,
 		const std::pair<Room *, double>& rhs)
 		-> bool { return lhs.second > rhs.second; };
+	//std::priority_queue<
+	//	std::pair<Room *, double>,
+	//	std::vector<std::pair<Room *, double>>,
+	//	decltype(comp)
+	//	> q;
 	std::priority_queue<
 		std::pair<Room *, double>,
 		std::vector<std::pair<Room *, double>>,
 		decltype(comp)
-		> q;
+	> q(comp);
 	d[s] = 0;
 	q.push(std::make_pair(s, 0));
 	while (!q.empty()) {
