@@ -1,6 +1,6 @@
 #include "Graph.h"
-
-
+#include <map>
+#include <queue>
 
 Graph::Graph()
 {
@@ -24,13 +24,13 @@ void Graph::CalcAttractions()
 			}
 		}
 		double totalVelocity = 0;
-		for (auto i = it.getNeighborsbegin(); i != it.getNeighborsend(); ++i) {
-			totalVelocity += _room2gate[it][**i].getVelocity();
+		for (auto i : *it) {
+			totalVelocity += i->getVelocity();
 		}
-		minTime += it.getPopulation() / totalVelocity;
+		minTime += it->getPopulation() / totalVelocity;
 		double attrac;
 		//attrac = f(minTime);
-		it.setAttraction(attrac);
+		it->setAttraction(attrac);
 	}
 }
 
@@ -41,72 +41,49 @@ void Graph::TraversalAndMove()
 	}
 }
 
-double Graph::Dijstra(Room s, Room t)
+// calculate the time needed from `Room s` to `Room t`
+// please note that `s->getCrossTime()` is INCLUDED, `t->getCrossTime()` is EXCLUDED
+double Graph::minTimeRequired(Room * s, Room * t)
 {
-
-	int min, Final[maxSize], k, *a;//final用来存储到各节点的最短距离;*a作为返回值
-	int  kn[maxSize];//kn是否找到最短路径
-	for (int i = 0; i < numVertxnode; i++)//
-	{
-		if (vertxnode[i].data == q)
-		{
-			v2 = vertxnode[i];
-		}
-		if (vertxnode[i].data == p)
-		{
-			v = vertxnode[i];
-			temp = v.firstEdge;
-			Final[i] = 0;
-			kn[i] = 1;
-		}
-		else {
-			Final[i] = INFINITY;
-			kn[i] = 0;
-		}
-	}
-	if (v.data == '0' || (v2.data == '0'&&choose == 2))
-	{
-		cout << "输入点有误！" << endl;
-		return;
-	}
-	else
-	{
-		while (temp)
-		{
-			Final[temp->adjvex] = temp->weight;
-			temp = temp->next;
-		}
-	}
-
-	min = INFINITY;
-	for (int i = 0; i < numVertxnode; i++)//主循环
-	{
-		while (temp)
-		{
-			if (kn[temp->adjvex] == 0 && temp->weight + min < Final[temp->adjvex])
-			{
-				Final[temp->adjvex] = temp->weight + min;
+	std::map<Room *, double> d;
+	auto comp = [](
+		const std::pair<Room *, double>& lhs,
+		const std::pair<Room *, double>& rhs)
+		-> bool { return lhs.second > rhs.second; };
+	std::priority_queue<
+		std::pair<Room *, double>,
+		std::vector<std::pair<Room *, double>>,
+		decltype(comp)
+		> q;
+	d[s] = 0;
+	q.push(std::make_pair(s, 0));
+	while (!q.empty()) {
+		auto curRoom = q.top().first;
+		auto curD = q.top().second;
+		q.pop();
+		if (curD > d[curRoom]) continue;
+		if (curRoom == t) continue;
+		for (const auto edge : *curRoom) {
+			auto newRoom = edge->getDest();
+			// if `newRoom` is not in the map `d`, 
+			// we can regard `d[newRoom]` as infinity
+			if (d.find(newRoom) == d.cend()) {
+				d[newRoom] = curD + curRoom->getCrossTime();
 			}
-			temp = temp->next;
-		}
-		min = INFINITY;
-		for (int j = 0; j < numVertxnode; j++)//查找到v最近的点
-		{
-			if (min > Final[j] && Final[j] != 0 && kn[j] == 0)
-			{
-				min = Final[j];
-				k = j;//记录min对于节点序号
+			else {
+				d[newRoom] = std::min(d[newRoom], curD + curRoom->getCrossTime());
 			}
+			q.push(std::make_pair(newRoom, d[newRoom]));
 		}
-		kn[k] = 1;//找到最近节点 
-		temp = vertxnode[k].firstEdge;
 	}
+	return d.find(t) != d.cend() ?
+		d[t] : 1e10;
 }
 
 bool Graph::isEscapeFinished()
 {
 	for (auto it : _rooms) {
-		if (!it.isEmpty()) {
+		if (!it->isEmpty()) {
 			return false;
 		}
 	}

@@ -1,8 +1,6 @@
 #pragma once
 #include "Room.h"
-#include "Gate.h"
-#include <vector>
-#include <map>
+
 class Graph
 {
 public:
@@ -10,12 +8,10 @@ public:
 	~Graph();
 	void CalcAttractions();
 	void TraversalAndMove();
-	double Dijstra(Room s, Room t);
+	double minTimeRequired(Room * s, Room * t);
 	bool isEscapeFinished();
 private:
-	vector<Room> _rooms;
-	vector<Room> _destinations;
-	vector<Gate> _gates;
-	map<Room, map<Room, Gate> > _room2gate;
+	std::vector<Room *> _rooms;
+	std::vector<Room *> _destinations;
 };
 
