@@ -1,23 +1,29 @@
 #pragma once
+#include "Gate.h"
 #include <list>
 #include <vector>
-using namespace std;
+
 class Room
 {
 	// serve as nodes on the graph
 public:
 	Room();
 	~Room();
-	bool isEmpty() { return _population == 0; }
+	bool isEmpty() const { return _population == 0; }
+	bool isExit() const { return _isExit; }
+	double getAttraction() const { return _attraction; }
+	double getCrossTime() const { return _crossTime; }
 	void setAttraction(double a) { _attraction = a; }
 	int getPopulation() { return _population; }
-	std::vector<Room * >::const_iterator getNeighborsbegin() const { return _neighborRooms.begin(); }
-	std::vector<Room * >::const_iterator getNeighborsend() const { return _neighborRooms.end(); }
-	std::vector<Room * >::const_iterator getNeighborscbegin() const { return _neighborRooms.cbegin(); }
-	std::vector<Room * >::const_iterator getNeighborscend() const { return _neighborRooms.cend(); }
+	void setPopulation(int population) { _population = population; }
+	std::vector<Gate * >::iterator begin() { return _gatesToNeighbor.begin(); }
+	std::vector<Gate * >::iterator end() { return _gatesToNeighbor.end(); }
+	std::vector<Gate * >::const_iterator cbegin() const { return _gatesToNeighbor.cbegin(); }
+	std::vector<Gate * >::const_iterator cend() const { return _gatesToNeighbor.cend(); }
 private:
 	double _attraction; // the attraction of the room
+	double _crossTime; // the time needed to go through this room
+	bool _isExit; // set this flag to TRUE if this is one of the exits
 	int _population; // current number of people in the room
-	vector<Room * > _neighborRooms; // rooms that are neighbor
+	std::vector<Gate * > _gatesToNeighbor; // gates to rooms that are neighbor
 };
-
